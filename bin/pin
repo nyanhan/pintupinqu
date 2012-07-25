@@ -1,0 +1,35 @@
+#!/usr/bin/env node
+
+var fs = require("fs");
+var program = require("commander");
+var server = require("../lib/server");
+var pack = require("../lib/pack");
+var child_process = require('child_process');
+
+var Config = {};
+
+try {
+    Config = JSON.parse(fs.readFileSync(__dirname + "/../package.json").toString());
+} catch(e) {/* throw e; */}
+
+program
+    .version(Config.version)
+    .option("-l, --listen <port>", "start pin server, listen <port> (< 1024 needs sudo).")
+    .option("-p, --pack", "pack & min code for release.")
+    .option("-v, --new_version", "generate new version number.")
+    .option("--no-compress", "pack code do not compress.")
+    .parse(process.argv);
+
+if (program.listen) {
+    server.listen(program.listen);
+} else if (program.new_version) {
+    pack.version();
+} else if (program.pack) {
+    pack.min(program.compress);
+} else {
+    child_process.exec('pin -h', function(error, stdout, stderr){
+        console.log(stdout);
+    });
+}
+
+
