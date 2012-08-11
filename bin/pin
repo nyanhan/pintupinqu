@@ -15,13 +15,16 @@ try {
 program
     .version(Config.version)
     .option("-l, --listen <port>", "start pin server, listen <port> (< 1024 needs sudo).")
+    .option("-s, --server <port>", "start static server, listen <port> (< 1024 needs sudo).")
     .option("-p, --pack", "pack & min code for release.")
     .option("-v, --new_version", "generate new version number.")
     .option("--no-compress", "pack code do not compress.")
     .parse(process.argv);
 
 if (program.listen) {
-    server.listen(program.listen);
+    server.listen(program.listen, true);
+} else if (program.server) {
+    server.listen(program.server);
 } else if (program.new_version) {
     pack.version();
 } else if (program.pack) {
