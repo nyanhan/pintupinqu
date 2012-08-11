@@ -34,5 +34,9 @@
     "pack",
     "css"
   ],
-  "license": "BSD"
+  "license": "BSD",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nyanhan/pintupinqu.git"
+  }
 }
