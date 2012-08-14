@@ -5,12 +5,14 @@ var program = require("commander");
 var server = require("../lib/server");
 var pack = require("../lib/pack");
 var child_process = require('child_process');
+var read_config = require('../lib/read_config');
 
 var Config = {};
 
 try {
     Config = JSON.parse(fs.readFileSync(__dirname + "/../package.json").toString());
 } catch(e) {/* throw e; */}
+
 
 program
     .version(Config.version)
