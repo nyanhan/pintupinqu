@@ -30,9 +30,7 @@ if (program.listen) {
 } else if (program.pack) {
     pack.min(program.compress);
 } else {
-    child_process.exec('pin -h', function(error, stdout, stderr){
-        console.log(stdout);
-    });
+    console.log(program.helpInformation());
 }
 
 
