@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 
-var fs = require("fs");
-var program = require("commander");
-var server = require("../lib/server");
-var pack = require("../lib/pack");
-var child_process = require('child_process');
-var read_config = require('../lib/read_config');
+var fs          = require("fs");
+var program     = require("commander");
+var server      = require("../lib/server");
+var pack        = require("../lib/pack");
 
 var Config = {};
 
@@ -23,13 +21,26 @@ program
     .option("--no-compress", "pack code do not compress.")
     .parse(process.argv);
 
+function test(){
+    try {
+        global.PROJECT_ROOT = process.cwd();
+        global.PACK_VERSION = fs.readFileSync(global.PROJECT_ROOT + "/version").toString().trim();
+    } catch(e) {
+        console.error("Read version file failed.. \n%s", e);
+        process.exit(1);
+    }
+}
 if (program.listen) {
+    test();
     server.listen(program.listen, true);
 } else if (program.server) {
+    test();
     server.listen(program.server);
 } else if (program.new_version) {
+    test();
     pack.version();
 } else if (program.pack) {
+    test();
     pack.min(program.compress);
 } else {
     console.log(program.helpInformation());
