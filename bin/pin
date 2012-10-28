@@ -4,16 +4,23 @@ var fs          = require("fs");
 var program     = require("commander");
 var server      = require("../lib/server");
 var pack        = require("../lib/pack");
+var mkdirp      = require('mkdirp');
+var path        = require('path');
+var build_less  = require("../lib/less_clr");
+var wrench      = require("wrench");
+
+global.PROJECT_ROOT = process.cwd();
 
 var Config = {};
 
 try {
-    Config = JSON.parse(fs.readFileSync(__dirname + "/../package.json").toString());
+    Config = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../package.json")).toString());
 } catch(e) {/* throw e; */}
 
 
 program
     .version(Config.version)
+    .option("-i, --init", "init a new project.")
     .option("-l, --listen <port>", "start pin server, listen <port> (< 1024 needs sudo).")
     .option("-s, --server <port>", "start static server, listen <port> (< 1024 needs sudo).")
     .option("-p, --pack", "pack & min code for release.")
@@ -23,14 +30,20 @@ program
 
 function test(){
     try {
-        global.PROJECT_ROOT = process.cwd();
-        global.PACK_VERSION = fs.readFileSync(global.PROJECT_ROOT + "/version").toString().trim();
+        global.PACK_VERSION = fs.readFileSync("version").toString().trim();
     } catch(e) {
         console.error("Read version file failed.. \n%s", e);
         process.exit(1);
     }
 }
-if (program.listen) {
+
+if (program.init) {
+    fs.writeFileSync("version", "");
+    mkdirp.sync("_src_/scripts");
+    mkdirp.sync("_src_/styles");
+    mkdirp.sync("_src_/less");
+    mkdirp.sync("lib");
+} else if (program.listen) {
     test();
     server.listen(program.listen, true);
 } else if (program.server) {
@@ -41,7 +54,19 @@ if (program.listen) {
     pack.version();
 } else if (program.pack) {
     test();
-    pack.min(program.compress);
+
+    // less 需要异步处理， 之前的代码都是同步的
+    // 所以先把 less 生成好， 然后再进行 打包也所
+    // 打包好后 删除 less 临时文件
+    
+    mkdirp.sync("_src_/less_temp");
+    build_less.build_temp(path.resolve("_src_/less"), function(ok){
+        if (ok) {
+            pack.min(program.compress);   
+        }
+        wrench.rmdirSyncRecursive("_src_/less_temp");
+    });
+
 } else {
     console.log(program.helpInformation());
 }

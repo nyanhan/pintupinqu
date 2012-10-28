@@ -25,4 +25,5 @@ release log:
 1. update uglifyjs to 2
 2. update clean-css
 3. clean code
-4. auto filter duplicate files // TODO bug only in one min file
+4. auto filter duplicate files
+5. LESS support

@@ -14,7 +14,10 @@
     "handlebars": "1.0.x",
     "clean-css": "0.x.x",
     "commander": "1.0.x",
-    "temp": "0.x.x"
+    "temp": "0.x.x",
+    "less": "1.x.x",
+    "async": "0.x.x",
+    "wrench": "1.x.x"
   },
   "engines": {
     "node": ">=0.8.0"

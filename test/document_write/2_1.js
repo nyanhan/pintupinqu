@@ -1,0 +1,1 @@
+document.write("<script src=\"3_1.js\"></script>");
