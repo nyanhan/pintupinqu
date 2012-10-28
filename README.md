@@ -23,8 +23,8 @@
 
 
 release log:
-*update uglifyjs to 2
-*update clean-css
-*clean code
-*auto filter duplicate files
-*LESS support
+* update uglifyjs to 2
+* update clean-css
+* clean code
+* auto filter duplicate files
+* LESS support
