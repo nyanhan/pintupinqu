@@ -91,7 +91,7 @@ if (program.init) {
             console.error("Error occurred with rsync..\n%s", e);
         } else {
             // console.log(log);
-            console.log("[NOTICE]: rsync upload success..");
+            console.log("[NOTICE]: rsync upload success..........................");
         }
     });
     
