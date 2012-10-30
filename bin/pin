@@ -26,7 +26,7 @@ program
     .option("-l, --listen <port>", "start pin server, listen <port> (< 1024 needs sudo).")
     .option("-s, --server <port>", "start static server, listen <port> (< 1024 needs sudo).")
     .option("-p, --pack", "pack & min code for release.")
-    .option("-u, --upload [path]", "scp to server, read config sftp-config.json")
+    .option("-u, --upload [path]", "rsync to server, read config sftp-config.json")
     .option("-v, --new_version", "generate new version number.")
     .option("--no-compress", "pack code do not compress.")
     .parse(process.argv);
