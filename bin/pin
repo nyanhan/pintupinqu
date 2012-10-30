@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
-var fs          = require("fs");
-var program     = require("commander");
-var server      = require("../lib/server");
-var pack        = require("../lib/pack");
-var mkdirp      = require('mkdirp');
-var path        = require('path');
-var build_less  = require("../lib/less_clr");
-var wrench      = require("wrench");
+var fs         = require("fs");
+var program    = require("commander");
+var server     = require("../lib/server");
+var pack       = require("../lib/pack");
+var rsync      = require("../lib/rsync");
+var mkdirp     = require('mkdirp');
+var path       = require('path');
+var build_less = require("../lib/less_clr");
+var wrench     = require("wrench");
+var os         = require("os");
 
 global.PROJECT_ROOT = process.cwd();
 
@@ -24,6 +26,7 @@ program
     .option("-l, --listen <port>", "start pin server, listen <port> (< 1024 needs sudo).")
     .option("-s, --server <port>", "start static server, listen <port> (< 1024 needs sudo).")
     .option("-p, --pack", "pack & min code for release.")
+    .option("-u, --upload [path]", "scp to server, read config sftp-config.json")
     .option("-v, --new_version", "generate new version number.")
     .option("--no-compress", "pack code do not compress.")
     .parse(process.argv);
@@ -37,12 +40,61 @@ function test(){
     }
 }
 
+function try_read_config(){
+    var string = "";
+
+    try {
+        string = fs.readFileSync("sftp-config.json")
+                    .toString().trim()
+                    .replace(/\/\/.*/g, "");
+
+        return JSON.parse(string);
+    } catch(e) {
+        console.error("Read sftp-config.json file failed.. \n%s", e);
+        process.exit(1);
+    }
+}
+
 if (program.init) {
+
     fs.writeFileSync("version", "");
     mkdirp.sync("_src_/scripts");
     mkdirp.sync("_src_/styles");
     mkdirp.sync("_src_/less");
     mkdirp.sync("lib");
+
+} else if (program.upload) {
+    var config = try_read_config();
+
+    if (!config) {
+        return console.error("No server info config..");
+    }
+
+    var dir = path.resolve(program.upload || ".");
+    var root = config.remote_path;
+
+    var stat = fs.lstatSync(dir);
+
+    if (stat.isDirectory()){
+        dir += (os.platform().toLowerCase() === "win32" ? "\\" : "/");
+    }
+
+    rsync.send({
+        file    : dir,
+        user    : config.user,  
+        host    : config.host,  
+        port    : config.port || '22',        
+        path    : path.resolve(root, program.upload),
+        key     : config.ssh_key_file
+    }, function(e, log){
+        if (e) {
+            console.error("Error occurred with rsync..\n%s", e);
+        } else {
+            // console.log(log);
+            console.log("[NOTICE]: rsync upload success..");
+        }
+    });
+    
 } else if (program.listen) {
     test();
     server.listen(program.listen, true);
