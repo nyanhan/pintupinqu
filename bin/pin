@@ -7,7 +7,6 @@ var pack       = require("../lib/pack");
 var rsync      = require("../lib/rsync");
 var mkdirp     = require('mkdirp');
 var path       = require('path');
-var build_less = require("../lib/less_clr");
 var wrench     = require("wrench");
 var os         = require("os");
 
@@ -60,7 +59,6 @@ if (program.init) {
     fs.writeFileSync("version", "");
     mkdirp.sync("_src_/scripts");
     mkdirp.sync("_src_/styles");
-    mkdirp.sync("_src_/less");
     mkdirp.sync("lib");
 
 } else if (program.upload) {
@@ -106,19 +104,7 @@ if (program.init) {
     pack.version();
 } else if (program.pack) {
     test();
-
-    // less 需要异步处理， 之前的代码都是同步的
-    // 所以先把 less 生成好， 然后再进行 打包也所
-    // 打包好后 删除 less 临时文件
-    
-    mkdirp.sync("_src_/less_temp");
-    build_less.build_temp(path.resolve("_src_/less"), function(ok){
-        if (ok) {
-            pack.min(program.compress);   
-        }
-        wrench.rmdirSyncRecursive("_src_/less_temp");
-    });
-
+    pack.min(program.compress);   
 } else {
     console.log(program.helpInformation());
 }
