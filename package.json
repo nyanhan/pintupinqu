@@ -9,7 +9,7 @@
   "dependencies": {
     "connect": "2.x.x",
     "mkdirp": "0.3.x",
-    "uglify-js2": "2.x.x",
+    "uglify-js": "2.x.x",
     "iconv-lite": "0.2.x",
     "handlebars": "1.0.x",
     "clean-css": "0.x.x",
