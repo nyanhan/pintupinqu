@@ -1,6 +1,6 @@
 {
   "name": "pintupinqu",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": "hiver.yan <hany.oy@gmail.com>",
   "main": "index.js",
   "bin": {
