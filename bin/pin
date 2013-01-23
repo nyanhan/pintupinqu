@@ -71,21 +71,9 @@ if (program.init) {
 
     jshint += " --config " + path.resolve(__dirname, "../.jshintrc");
 
-    // jshint += 
-
-    console.log(jshint);
-child_process.exec(jshint, function(error, stdout, stderr){
-    console.log(stdout);
-});
-    // child_process.exec(command, function(error, stdout, stderr){
-
-    //     if (error) { 
-    //         console.error(error);
-    //         process.exit(1);
-    //     }
-
-    //     next();
-    // });
+    child_process.exec(jshint, function(error, stdout, stderr){
+        console.log(stdout);
+    });
 
 } else if (program.upload) {
     var config = try_read_config();
