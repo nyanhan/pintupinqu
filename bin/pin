@@ -82,7 +82,13 @@ if (program.init) {
         return console.error("No server info config..");
     }
 
-    var dir = path.resolve(program.upload || ".");
+    var p = ".";
+
+    if (program.upload && program.upload !== true) {
+        p = program.upload;
+    }
+
+    var dir = path.resolve(p);
     var root = config.remote_path;
 
     var stat = fs.lstatSync(dir);
@@ -96,7 +102,7 @@ if (program.init) {
         user    : config.user,  
         host    : config.host,  
         port    : config.port || '22',        
-        path    : path.resolve(root, program.upload),
+        path    : path.resolve(root, p),
         key     : config.ssh_key_file
     }, function(e, log){
         if (e) {
