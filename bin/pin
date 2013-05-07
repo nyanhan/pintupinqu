@@ -124,7 +124,7 @@ if (program.init) {
     pack.version();
 } else if (program.pack) {
     test();
-    pack.min(program.compress);   
+    pack.min(program.compress, program.datauri);   
 } else {
     console.log(program.helpInformation());
 }

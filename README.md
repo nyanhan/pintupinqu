@@ -21,6 +21,9 @@
 // async load script, with min file packed
 /*@pack */
 
+// datauri root path
+/*@datauri */
+
 
 release log:
 * update uglifyjs to 2
