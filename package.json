@@ -1,6 +1,6 @@
 {
   "name": "pintupinqu",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "author": "hiver.yan <hany.oy@gmail.com>",
   "main": "index.js",
   "bin": {
@@ -18,7 +18,8 @@
     "less": "1.x.x",
     "async": "0.x.x",
     "wrench": "1.x.x",
-    "jshint": "0.9.x"
+    "jshint": "0.9.x",
+    "watch": "~0.7.0"
   },
   "engines": {
     "node": ">=0.8.0"

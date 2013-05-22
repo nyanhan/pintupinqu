@@ -1,17 +1,22 @@
 #!/usr/bin/env node
 
 var fs            = require("fs");
+var path          = require('path');
+
+global.CONFIG_HASH = try_read_config();
+global.PROJECT_ROOT = path.resolve(process.cwd(), global.CONFIG_HASH.static || "");
+
 var program       = require("commander");
 var server        = require("../lib/server");
 var pack          = require("../lib/pack");
 var rsync         = require("../lib/rsync");
+var less_clr      = require("../lib/less_clr");
+var util          = require("../lib/util");
 var mkdirp        = require('mkdirp');
-var path          = require('path');
 var wrench        = require("wrench");
 var os            = require("os");
 var child_process = require("child_process");
-
-global.PROJECT_ROOT = process.cwd();
+var watch         = require("watch");
 
 var Config = {};
 
@@ -27,14 +32,16 @@ program
     .option("-l, --listen <port>", "start pin server, listen <port> (< 1024 needs sudo).")
     .option("-s, --server <port>", "start static server, listen <port> (< 1024 needs sudo).")
     .option("-p, --pack", "pack & min code for release.")
-    .option("-u, --upload [path]", "rsync to server, read config sftp-config.json")
+    .option("-u, --upload [path]", "rsync to server, read config sftp.")
     .option("-v, --new_version", "generate new version number.")
+    .option("-w, --watch", "auto build less code when changed.")
+    .option("-b, --build", "manual build code.")
     .option("--no-compress", "pack code do not compress.")
     .parse(process.argv);
 
 function test(){
     try {
-        global.PACK_VERSION = fs.readFileSync("version").toString().trim();
+        global.PACK_VERSION = fs.readFileSync(path.resolve(global.PROJECT_ROOT, "version")).toString().trim();
     } catch(e) {
         console.error("Read version file failed.. \n%s", e);
         process.exit(1);
@@ -45,20 +52,67 @@ function try_read_config(){
     var string = "";
 
     try {
-        string = fs.readFileSync("sftp-config.json")
+        string = fs.readFileSync("pinrc.json")
                     .toString().trim()
                     .replace(/\/\/.*/g, "");
 
         return JSON.parse(string);
     } catch(e) {
-        console.error("Read sftp-config.json file failed.. \n%s", e);
+        console.error("Read pinrc.json file failed.. \n%s", e);
         process.exit(1);
+    }
+}
+
+function build_lessc(){
+    var less = global.CONFIG_HASH.less;
+
+    if (!less) {
+        console.error("No less folder config..\n");
+    }
+
+    for (var k in less) {
+        if (less.hasOwnProperty(k)) {
+
+            var tar = path.resolve(global.PROJECT_ROOT, less[k]);
+
+            if (fs.existsSync(tar)) {
+                // 如果目录存在 删除掉
+                (function(p){
+
+                    var files = util.readFilesDeep(p);
+
+                    files.forEach(function(item){
+                        fs.unlinkSync(item);
+                    });
+
+                })(path.resolve(global.PROJECT_ROOT, less[k]));
+
+                fs.rmdirSync(path.resolve(global.PROJECT_ROOT, less[k]));
+            }
+            
+            // 重建目录
+            mkdirp.sync(tar);
+
+            (function(p){
+
+                function mp(f) {
+                    return path.resolve(global.PROJECT_ROOT, less[k], path.relative(p, f).replace(".less", ".css"));
+                }
+
+                var files = util.readFilesDeep(p);
+
+                files.forEach(function(item){
+                    less_clr.build(item, mp(item));
+                });
+
+            })(path.resolve(global.PROJECT_ROOT, k));
+        }
     }
 }
 
 if (program.init) {
 
-    fs.writeFileSync("version", "");
+    fs.writeFileSync(path.resolve(global.PROJECT_ROOT, "version"), "");
     mkdirp.sync("_src_/scripts");
     mkdirp.sync("_src_/styles");
     mkdirp.sync("lib");
@@ -76,11 +130,14 @@ if (program.init) {
     });
 
 } else if (program.upload) {
-    var config = try_read_config();
 
-    if (!config) {
+    var config = global.CONFIG_HASH;
+
+    if (!config || !config.sftp) {
         return console.error("No server info config..");
     }
+
+    config = config.sftp;
 
     var p = ".";
 
@@ -98,17 +155,17 @@ if (program.init) {
     }
 
     rsync.send({
-        file    : dir,
-        user    : config.user,  
-        host    : config.host,  
-        port    : config.port || '22',        
-        path    : path.resolve(root, p),
-        key     : config.ssh_key_file
+        file : dir,
+        user : config.user,  
+        host : config.host,  
+        port : config.port || '22',        
+        path : path.resolve(root, p),
+        key  : config.ssh_key_file
     }, function(e, log){
         if (e) {
             console.error("Error occurred with rsync..\n%s", e);
         } else {
-            // console.log(log);
+            console.log(log);
             console.log("[NOTICE]: rsync upload success..........................");
         }
     });
@@ -124,7 +181,52 @@ if (program.init) {
     pack.version();
 } else if (program.pack) {
     test();
+    build_lessc();
     pack.min(program.compress, program.datauri);   
+} else if (program.watch) {
+    var less = global.CONFIG_HASH.less;
+
+    if (!less) {
+        console.error("No less folder config..\n");
+    }
+
+    for (var k in less) {
+
+        if (less.hasOwnProperty(k)) {
+
+            (function(p){
+
+                function mp(f) {
+                    return path.resolve(global.PROJECT_ROOT, less[k], path.relative(p, f).replace(".less", ".css"));
+                }
+
+                console.log("Watching " + p);
+
+                watch.createMonitor(p, function (monitor) {
+
+                    monitor.on("created", function (f, stat) {
+                        var tp = mp(f);
+                        less_clr.build(f, tp);
+                    });
+
+                    monitor.on("changed", function (f, curr, prev) {
+                        var tp = mp(f);
+                        less_clr.build(f, tp);
+                    });
+
+                    monitor.on("removed", function (f, stat) {
+                        var tp = mp(f);
+                        fs.unlink(tp, function(err){ /*console.log(err);*/ });
+                    });
+                })
+
+            })(path.resolve(global.PROJECT_ROOT, k));
+        }
+    }
+    
+} else if (program.build) {
+    test();
+    build_lessc();
 } else {
     console.log(program.helpInformation());
 }
