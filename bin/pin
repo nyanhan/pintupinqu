@@ -113,9 +113,10 @@ function build_lessc(){
 if (program.init) {
 
     fs.writeFileSync(path.resolve(global.PROJECT_ROOT, "version"), "");
-    mkdirp.sync("_src_/scripts");
-    mkdirp.sync("_src_/styles");
-    mkdirp.sync("lib");
+    mkdirp.sync(path.resolve(global.PROJECT_ROOT, "_src_/less"));
+    mkdirp.sync(path.resolve(global.PROJECT_ROOT, "_src_/scripts"));
+    mkdirp.sync(path.resolve(global.PROJECT_ROOT, "_src_/styles"));
+    mkdirp.sync(path.resolve(global.PROJECT_ROOT, "lib"));
 
 } else if (program.lint) {
 
@@ -184,45 +185,34 @@ if (program.init) {
     build_lessc();
     pack.min(program.compress, program.datauri);   
 } else if (program.watch) {
-    var less = global.CONFIG_HASH.less;
 
-    if (!less) {
-        console.error("No less folder config..\n");
+    var watchList = global.CONFIG_HASH.watch;
+
+    if (!watchList) {
+        console.error("No watch folder config..\n");
     }
 
-    for (var k in less) {
+    watchList.forEach(function(item){
 
-        if (less.hasOwnProperty(k)) {
+        var p = path.resolve(global.PROJECT_ROOT, item);
 
-            (function(p){
+        console.log("Watching " + p);
 
-                function mp(f) {
-                    return path.resolve(global.PROJECT_ROOT, less[k], path.relative(p, f).replace(".less", ".css"));
-                }
+        watch.createMonitor(p, function (monitor) {
+            monitor.on("created", function (f, stat) {
+                build_lessc();
+            });
 
-                console.log("Watching " + p);
+            monitor.on("changed", function (f, curr, prev) {
+                build_lessc();
+            });
 
-                watch.createMonitor(p, function (monitor) {
+            monitor.on("removed", function (f, stat) {
+                build_lessc();
+            });
+        });
 
-                    monitor.on("created", function (f, stat) {
-                        var tp = mp(f);
-                        less_clr.build(f, tp);
-                    });
-
-                    monitor.on("changed", function (f, curr, prev) {
-                        var tp = mp(f);
-                        less_clr.build(f, tp);
-                    });
-
-                    monitor.on("removed", function (f, stat) {
-                        var tp = mp(f);
-                        fs.unlink(tp, function(err){ /*console.log(err);*/ });
-                    });
-                })
-
-            })(path.resolve(global.PROJECT_ROOT, k));
-        }
-    }
+    });
     
 } else if (program.build) {
     test();
