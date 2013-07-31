@@ -50,7 +50,6 @@ function test(){
 
 function try_read_config(){
     var string = "";
-
     try {
         string = fs.readFileSync("pinrc.json")
                     .toString().trim()
@@ -89,7 +88,7 @@ function build_lessc(){
 
                 fs.rmdirSync(path.resolve(global.PROJECT_ROOT, less[k]));
             }
-            
+
             // 重建目录
             mkdirp.sync(tar);
 
@@ -157,9 +156,9 @@ if (program.init) {
 
     rsync.send({
         file : dir,
-        user : config.user,  
-        host : config.host,  
-        port : config.port || '22',        
+        user : config.user,
+        host : config.host,
+        port : config.port || '22',
         path : path.resolve(root, p),
         key  : config.ssh_key_file
     }, function(e, log){
@@ -170,7 +169,7 @@ if (program.init) {
             console.log("[NOTICE]: rsync upload success..........................");
         }
     });
-    
+
 } else if (program.listen) {
     test();
     server.listen(program.listen, true);
@@ -183,7 +182,7 @@ if (program.init) {
 } else if (program.pack) {
     test();
     build_lessc();
-    pack.min(program.compress, program.datauri);   
+    pack.min(program.compress, program.datauri);
 } else if (program.watch) {
 
     var watchList = global.CONFIG_HASH.watch;
@@ -213,7 +212,7 @@ if (program.init) {
         });
 
     });
-    
+
 } else if (program.build) {
     test();
     build_lessc();
